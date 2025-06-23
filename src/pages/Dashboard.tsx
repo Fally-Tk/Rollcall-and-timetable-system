@@ -4,77 +4,27 @@ import { Users, BookOpen, AlertTriangle, TrendingUp, Calendar, ClipboardList, Fi
 import { APIService } from '../utils/api';
 import { LocalDBService } from '../utils/localdb';
 import type { DashboardStats, FieldStats, TopAbsenteeField } from '../types';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+} from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
 
-// Demo data for fallback
-const getDemoDashboardData = (): DashboardStats => ({
-  totalStudents: 1250,
-  totalFields: 8,
-  todayAbsentees: 45,
-  weeklyAbsentees: 180,
-  monthlyAbsentees: 520,
-  fieldStats: [
-    {
-      fieldId: '1',
-      fieldName: 'Computer Science',
-      totalStudents: 320,
-      presentToday: 285,
-      absentToday: 35,
-      attendanceRate: 89.1
-    },
-    {
-      fieldId: '2',
-      fieldName: 'Software Engineering',
-      totalStudents: 280,
-      presentToday: 265,
-      absentToday: 15,
-      attendanceRate: 94.6
-    },
-    {
-      fieldId: '3',
-      fieldName: 'Information Technology',
-      totalStudents: 250,
-      presentToday: 230,
-      absentToday: 20,
-      attendanceRate: 92.0
-    },
-    {
-      fieldId: '4',
-      fieldName: 'Cybersecurity',
-      totalStudents: 180,
-      presentToday: 165,
-      absentToday: 15,
-      attendanceRate: 91.7
-    },
-    {
-      fieldId: '5',
-      fieldName: 'Data Science',
-      totalStudents: 220,
-      presentToday: 200,
-      absentToday: 20,
-      attendanceRate: 90.9
-    }
-  ],
-  topAbsenteeFields: [
-    {
-      fieldName: 'Computer Science',
-      absenteeCount: 35,
-      totalStudents: 320,
-      absenteeRate: 10.9
-    },
-    {
-      fieldName: 'Data Science',
-      absenteeCount: 20,
-      totalStudents: 220,
-      absenteeRate: 9.1
-    },
-    {
-      fieldName: 'Information Technology',
-      absenteeCount: 20,
-      totalStudents: 250,
-      absenteeRate: 8.0
-    }
-  ]
-});
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -91,19 +41,7 @@ export default function Dashboard() {
       setLoading(true);
       setError(null);
 
-      let dashboardData;
-      try {
-        dashboardData = await APIService.getDashboardStats();
-      } catch (apiError) {
-        // Fallback to cached data
-        dashboardData = LocalDBService.getCachedData('rollcall_cached_dashboard');
-        
-        if (!dashboardData) {
-          console.log('Using demo data as fallback');
-          dashboardData = getDemoDashboardData();
-        }
-      }
-
+      const dashboardData = await APIService.getDashboardStats();
       setStats(dashboardData);
       
       // Cache the data
@@ -147,6 +85,72 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  // Chart data for field performance
+  const fieldPerformanceData = {
+    labels: stats.fieldStats.map(field => field.fieldName),
+    datasets: [
+      {
+        label: 'Attendance Rate (%)',
+        data: stats.fieldStats.map(field => field.attendanceRate),
+        backgroundColor: stats.fieldStats.map(field => 
+          field.attendanceRate >= 95 ? '#10B981' :
+          field.attendanceRate >= 90 ? '#3B82F6' :
+          field.attendanceRate >= 85 ? '#F59E0B' : '#EF4444'
+        ),
+        borderColor: stats.fieldStats.map(field => 
+          field.attendanceRate >= 95 ? '#059669' :
+          field.attendanceRate >= 90 ? '#2563EB' :
+          field.attendanceRate >= 85 ? '#D97706' : '#DC2626'
+        ),
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      title: {
+        display: true,
+        text: 'Field Performance - Attendance Rates',
+        font: {
+          size: 16,
+          weight: 'bold' as const,
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 100,
+        ticks: {
+          callback: function(value: any) {
+            return value + '%';
+          },
+        },
+      },
+    },
+  };
+
+  // Doughnut chart for overall attendance
+  const attendanceOverviewData = {
+    labels: ['Present Today', 'Absent Today'],
+    datasets: [
+      {
+        data: [
+          stats.fieldStats.reduce((sum, field) => sum + field.presentToday, 0),
+          stats.todayAbsentees
+        ],
+        backgroundColor: ['#10B981', '#EF4444'],
+        borderColor: ['#059669', '#DC2626'],
+        borderWidth: 2,
+      },
+    ],
+  };
 
   return (
     <div className="space-y-8">
@@ -271,94 +275,77 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Field Statistics */}
+      {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Field Performance */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Field Performance</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Today's attendance by field</p>
-          </div>
-          <div className="p-6">
-            <div className="space-y-6">
-              {stats.fieldStats.map((field) => (
-                <div key={field.fieldId} className="group">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {field.fieldName}
-                    </span>
-                    <span className={`text-sm font-semibold px-2 py-1 rounded-full ${
-                      field.attendanceRate >= 95 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                      field.attendanceRate >= 90 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-                      field.attendanceRate >= 85 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                      'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                    }`}>
-                      {field.attendanceRate.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-2">
-                    <div
-                      className={`h-3 rounded-full transition-all duration-500 ${
-                        field.attendanceRate >= 95 ? 'bg-green-500' :
-                        field.attendanceRate >= 90 ? 'bg-blue-500' :
-                        field.attendanceRate >= 85 ? 'bg-yellow-500' :
-                        'bg-red-500'
-                      }`}
-                      style={{ width: `${field.attendanceRate}%` }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span>Present: {field.presentToday}</span>
-                    <span>Absent: {field.absentToday}</span>
-                    <span>Total: {field.totalStudents}</span>
-                  </div>
-                </div>
-              ))}
+        {/* Field Performance Chart */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+          <Bar data={fieldPerformanceData} options={chartOptions} />
+        </div>
+
+        {/* Attendance Overview */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 text-center">
+            Today's Attendance Overview
+          </h3>
+          <div className="flex justify-center">
+            <div className="w-64 h-64">
+              <Doughnut 
+                data={attendanceOverviewData} 
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: 'bottom' as const,
+                    },
+                  },
+                }}
+              />
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Top Absentee Fields */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Fields Requiring Attention</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Highest absentee rates today</p>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              {stats.topAbsenteeFields.map((field, index) => (
-                <div key={field.fieldName} className="flex items-center space-x-4 p-4 bg-red-50 dark:bg-red-900 rounded-lg">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
-                    index === 0 ? 'bg-red-500 text-white' :
-                    index === 1 ? 'bg-orange-500 text-white' :
-                    'bg-yellow-500 text-white'
-                  }`}>
-                    {index + 1}
+      {/* Fields Requiring Attention */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">Fields Requiring Attention</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Highest absentee rates today</p>
+        </div>
+        <div className="p-6">
+          <div className="space-y-4">
+            {stats.topAbsenteeFields.map((field, index) => (
+              <div key={field.fieldName} className="flex items-center space-x-4 p-4 bg-red-50 dark:bg-red-900 rounded-lg">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
+                  index === 0 ? 'bg-red-500 text-white' :
+                  index === 1 ? 'bg-orange-500 text-white' :
+                  'bg-yellow-500 text-white'
+                }`}>
+                  {index + 1}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {field.fieldName}
+                    </span>
+                    <span className="text-red-600 dark:text-red-400 font-bold">
+                      {field.absenteeRate.toFixed(1)}%
+                    </span>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-gray-900 dark:text-white">
-                        {field.fieldName}
-                      </span>
-                      <span className="text-red-600 dark:text-red-400 font-bold">
-                        {field.absenteeRate.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      {field.absenteeCount} of {field.totalStudents} students absent
-                    </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    {field.absenteeCount} of {field.totalStudents} students absent
                   </div>
                 </div>
-              ))}
-            </div>
-            <button 
-              onClick={() => navigate('/reports')}
-              className="w-full mt-4 flex items-center justify-center space-x-2 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              <FileText className="w-4 h-4" />
-              <span>View Detailed Reports</span>
-            </button>
+              </div>
+            ))}
           </div>
+          <button 
+            onClick={() => navigate('/reports')}
+            className="w-full mt-4 flex items-center justify-center space-x-2 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            <FileText className="w-4 h-4" />
+            <span>View Detailed Reports</span>
+          </button>
         </div>
       </div>
     </div>

@@ -1,145 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, Clock, Users, MapPin, Phone, MessageCircle, Filter } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, Users, MapPin, Phone, MessageCircle, Filter, Eye, Calendar, BookOpen } from 'lucide-react';
 import { APIService } from '../utils/api';
 import { LocalDBService } from '../utils/localdb';
 import { SyncService } from '../utils/sync';
 import type { Session, Student, AttendanceRecord, AbsenteeRecord } from '../types';
-
-// Demo data for fallback
-const getDemoSessionData = (): Session[] => {
-  const now = new Date();
-  const currentHour = now.getHours();
-  
-  return [
-    {
-      id: 'session-1',
-      courseTitle: 'Database Systems',
-      courseCode: 'CS201',
-      fieldName: 'Computer Science',
-      level: 'Level 200',
-      room: 'Lab 101',
-      startTime: `${currentHour}:00`,
-      endTime: `${currentHour + 2}:00`,
-      day: 'Monday',
-      lecturer: 'Dr. Smith',
-      students: [
-        {
-          id: 'student-1',
-          name: 'Alice Johnson',
-          matricule: 'CS200/001',
-          field: 'Computer Science',
-          level: 'Level 200',
-          parentPhone: '+1234567890',
-          parentName: 'John Johnson',
-          parentEmail: 'john.johnson@email.com',
-          photo: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-          isPresent: undefined
-        },
-        {
-          id: 'student-2',
-          name: 'Bob Smith',
-          matricule: 'CS200/002',
-          field: 'Computer Science',
-          level: 'Level 200',
-          parentPhone: '+1234567891',
-          parentName: 'Mary Smith',
-          parentEmail: 'mary.smith@email.com',
-          photo: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-          isPresent: undefined
-        },
-        {
-          id: 'student-3',
-          name: 'Carol Davis',
-          matricule: 'CS200/003',
-          field: 'Computer Science',
-          level: 'Level 200',
-          parentPhone: '+1234567892',
-          parentName: 'Robert Davis',
-          parentEmail: 'robert.davis@email.com',
-          photo: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-          isPresent: undefined
-        }
-      ]
-    },
-    {
-      id: 'session-2',
-      courseTitle: 'Software Engineering Principles',
-      courseCode: 'SE201',
-      fieldName: 'Software Engineering',
-      level: 'Level 200',
-      room: 'Room 205',
-      startTime: `${currentHour}:00`,
-      endTime: `${currentHour + 2}:00`,
-      day: 'Monday',
-      lecturer: 'Prof. Wilson',
-      students: [
-        {
-          id: 'student-4',
-          name: 'David Wilson',
-          matricule: 'SE200/001',
-          field: 'Software Engineering',
-          level: 'Level 200',
-          parentPhone: '+1234567893',
-          parentName: 'Linda Wilson',
-          parentEmail: 'linda.wilson@email.com',
-          photo: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-          isPresent: undefined
-        },
-        {
-          id: 'student-5',
-          name: 'Emma Brown',
-          matricule: 'SE200/002',
-          field: 'Software Engineering',
-          level: 'Level 200',
-          parentPhone: '+1234567894',
-          parentName: 'Michael Brown',
-          parentEmail: 'michael.brown@email.com',
-          photo: 'https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-          isPresent: undefined
-        }
-      ]
-    },
-    // Common course example - same course for multiple fields
-    {
-      id: 'session-3',
-      courseTitle: 'Mathematics for Engineers',
-      courseCode: 'MATH101',
-      fieldName: 'Computer Science,Software Engineering', // Combined fields
-      level: 'Level 100',
-      room: 'Amphitheater A',
-      startTime: `${currentHour}:00`,
-      endTime: `${currentHour + 2}:00`,
-      day: 'Monday',
-      lecturer: 'Prof. Mathematics',
-      students: [
-        {
-          id: 'student-6',
-          name: 'Frank Miller',
-          matricule: 'CS100/001',
-          field: 'Computer Science',
-          level: 'Level 100',
-          parentPhone: '+1234567895',
-          parentName: 'Susan Miller',
-          parentEmail: 'susan.miller@email.com',
-          photo: 'https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-          isPresent: undefined
-        },
-        {
-          id: 'student-7',
-          name: 'Grace Lee',
-          matricule: 'SE100/001',
-          field: 'Software Engineering',
-          level: 'Level 100',
-          parentPhone: '+1234567896',
-          parentName: 'James Lee',
-          parentEmail: 'james.lee@email.com',
-          photo: 'https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-          isPresent: undefined
-        }
-      ]
-    }
-  ];
-};
 
 export default function Rollcall() {
   const [availableSessions, setAvailableSessions] = useState<Session[]>([]);
@@ -152,6 +16,8 @@ export default function Rollcall() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [selectedField, setSelectedField] = useState<string>('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedAbsenteeGroup, setSelectedAbsenteeGroup] = useState<any>(null);
 
   useEffect(() => {
     loadAvailableSessions();
@@ -162,22 +28,8 @@ export default function Rollcall() {
       setLoading(true);
       setError(null);
 
-      let sessionData;
-      try {
-        sessionData = await APIService.getCurrentSessions();
-      } catch (apiError) {
-        sessionData = LocalDBService.getCachedData('rollcall_cached_sessions');
-        
-        if (!sessionData || sessionData.length === 0) {
-          console.log('Using demo data as fallback');
-          sessionData = getDemoSessionData();
-        }
-      }
-
+      const sessionData = await APIService.getCurrentSessions();
       setAvailableSessions(sessionData || []);
-      
-      // Cache the session data
-      LocalDBService.cacheData('rollcall_cached_sessions', sessionData);
 
     } catch (error) {
       console.error('Failed to load available sessions:', error);
@@ -237,7 +89,7 @@ IME Discipline Master`;
     setError(null);
 
     try {
-      // Try to submit directly to API first
+      // Submit attendance records
       if (navigator.onLine) {
         try {
           for (const record of attendanceRecords) {
@@ -280,7 +132,13 @@ IME Discipline Master`;
       }));
 
       setAbsentees(absenteeRecords);
+
+      // Remove the session from available sessions after successful submission
+      setAvailableSessions(prev => prev.filter(session => session.id !== selectedSession.id));
+      
+      // Show absentee summary
       setShowAbsentees(true);
+      setSelectedSession(null);
 
       // Clear success message after 5 seconds
       setTimeout(() => setSuccessMessage(null), 5000);
@@ -299,14 +157,17 @@ IME Discipline Master`;
   };
 
   const handleSendSMS = (phoneNumber: string, studentName: string, parentName: string, fieldName: string) => {
-    if (!selectedSession) return;
+    if (!selectedSession && !selectedAbsenteeGroup) return;
+    
+    const courseTitle = selectedSession?.courseTitle || selectedAbsenteeGroup?.courseTitle;
+    const timeSlot = selectedSession ? `${selectedSession.startTime} - ${selectedSession.endTime}` : 'today';
     
     const message = generateSMSMessage(
       studentName, 
       parentName, 
       fieldName, 
-      selectedSession.courseTitle, 
-      `${selectedSession.startTime} - ${selectedSession.endTime}`
+      courseTitle, 
+      timeSlot
     );
     
     const encodedMessage = encodeURIComponent(message);
@@ -329,6 +190,26 @@ IME Discipline Master`;
     return availableSessions.filter(session => 
       session.fieldName.includes(selectedField)
     );
+  };
+
+  // Group absentees by field and course
+  const getAbsenteeGroups = () => {
+    const groups = absentees.reduce((acc, absentee) => {
+      const key = `${absentee.fieldName}-${absentee.courseTitle}`;
+      if (!acc[key]) {
+        acc[key] = {
+          fieldName: absentee.fieldName,
+          courseTitle: absentee.courseTitle,
+          courseCode: absentee.courseCode,
+          date: absentee.date,
+          absentees: []
+        };
+      }
+      acc[key].absentees.push(absentee);
+      return acc;
+    }, {} as Record<string, any>);
+
+    return Object.values(groups);
   };
 
   if (loading) {
@@ -362,17 +243,115 @@ IME Discipline Master`;
     );
   }
 
-  // Show absentee list after attendance submission
+  // Show absentee groups after attendance submission
   if (showAbsentees && absentees.length > 0) {
+    const absenteeGroups = getAbsenteeGroups();
+
+    if (selectedAbsenteeGroup) {
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Absentee Details - {selectedAbsenteeGroup.courseTitle}
+              </h1>
+              <p className="text-gray-500 dark:text-gray-400 mt-1">
+                {selectedAbsenteeGroup.absentees.length} students absent from {selectedAbsenteeGroup.fieldName}
+              </p>
+            </div>
+            <button
+              onClick={() => setSelectedAbsenteeGroup(null)}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              ← Back to Summary
+            </button>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Student
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Field & Level
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Parent Contact
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {selectedAbsenteeGroup.absentees.map((record: any) => (
+                    <tr key={record.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {record.studentName}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            {record.matricule}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          {record.fieldName}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {record.level}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          {record.parentName}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {record.parentPhone}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end space-x-2">
+                          <button
+                            onClick={() => handleCallParent(record.parentPhone)}
+                            className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                            title="Call Parent"
+                          >
+                            <Phone className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          </button>
+                          <button
+                            onClick={() => handleSendSMS(record.parentPhone, record.studentName, record.parentName, record.fieldName)}
+                            className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+                            title="Send SMS"
+                          >
+                            <MessageCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Absentee List - {selectedSession?.courseTitle}
+              Absentee Summary
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-1">
-              {absentees.length} students absent from {selectedSession?.fieldName} - {selectedSession?.level}
+              {absentees.length} total students absent from {absenteeGroups.length} courses
             </p>
           </div>
           <button
@@ -383,77 +362,43 @@ IME Discipline Master`;
           </button>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Student
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Field & Level
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Parent Contact
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {absentees.map((record) => (
-                  <tr key={record.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {record.studentName}
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {record.matricule}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {record.fieldName}
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {record.level}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {record.parentName}
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {record.parentPhone}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end space-x-2">
-                        <button
-                          onClick={() => handleCallParent(record.parentPhone)}
-                          className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
-                          title="Call Parent"
-                        >
-                          <Phone className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                        </button>
-                        <button
-                          onClick={() => handleSendSMS(record.parentPhone, record.studentName, record.parentName, record.fieldName)}
-                          className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
-                          title="Send SMS"
-                        >
-                          <MessageCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {absenteeGroups.map((group, index) => (
+            <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {group.fieldName}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {group.courseTitle} ({group.courseCode})
+                  </p>
+                </div>
+                <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-200">
+                  {group.absentees.length} absent
+                </span>
+              </div>
+              
+              <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400 mb-4">
+                <div className="flex items-center space-x-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>{new Date(group.date).toLocaleDateString()}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Users className="w-4 h-4" />
+                  <span>{group.absentees.length} students absent</span>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => setSelectedAbsenteeGroup(group)}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Eye className="w-4 h-4" />
+                <span>View Student Info</span>
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -498,27 +443,79 @@ IME Discipline Master`;
       {/* Field Filter */}
       {!selectedSession && availableSessions.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center space-x-4">
-            <Filter className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Filter by Field:
-            </label>
-            <select
-              value={selectedField}
-              onChange={(e) => setSelectedField(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Filter className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Filter by Field:
+              </label>
+              <select
+                value={selectedField}
+                onChange={(e) => setSelectedField(e.target.value)}
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              >
+                <option value="">All Fields</option>
+                {getAvailableFields().map(field => (
+                  <option key={field} value={field}>{field}</option>
+                ))}
+              </select>
+              {selectedField && (
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  Showing {filteredSessions.length} sessions for {selectedField}
+                </span>
+              )}
+            </div>
+            
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              <option value="">All Fields</option>
-              {getAvailableFields().map(field => (
-                <option key={field} value={field}>{field}</option>
-              ))}
-            </select>
-            {selectedField && (
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                Showing {filteredSessions.length} sessions for {selectedField}
-              </span>
-            )}
+              <Filter className="w-4 h-4" />
+              <span>More Filters</span>
+            </button>
           </div>
+
+          {/* Additional Filters */}
+          {showFilters && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Level
+                  </label>
+                  <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                    <option value="">All Levels</option>
+                    <option value="Level 100">Level 100</option>
+                    <option value="Level 200">Level 200</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Room
+                  </label>
+                  <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                    <option value="">All Rooms</option>
+                    {[...new Set(availableSessions.map(s => s.room))].map(room => (
+                      <option key={room} value={room}>{room}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Time Slot
+                  </label>
+                  <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                    <option value="">All Times</option>
+                    {[...new Set(availableSessions.map(s => `${s.startTime} - ${s.endTime}`))].map(time => (
+                      <option key={time} value={time}>{time}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

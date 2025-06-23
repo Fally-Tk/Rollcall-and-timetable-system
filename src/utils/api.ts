@@ -22,330 +22,160 @@ export class APIService {
     }
   }
 
-  static async getCurrentSessions() {
-    try {
-      const response = await this.fetchWithTimeout(`${API_BASE_URL}/get_current_sessions.php`);
-      if (!response.ok) throw new Error('Failed to fetch current sessions');
-      
-      const text = await response.text();
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('Invalid JSON response:', text);
-        throw new Error('Invalid JSON response from server');
-      }
-    } catch (error) {
-      console.error('API Error - getCurrentSessions:', error);
-      throw error;
+  private static async handleResponse(response: Response) {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+    
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch (parseError) {
+      console.error('Invalid JSON response:', text);
+      throw new Error('Invalid JSON response from server');
+    }
+  }
+
+  static async getCurrentSessions() {
+    const response = await this.fetchWithTimeout(`${API_BASE_URL}/get_current_sessions.php`);
+    return this.handleResponse(response);
   }
 
   static async getTimetable() {
-    try {
-      const response = await this.fetchWithTimeout(`${API_BASE_URL}/get_timetable.php`);
-      if (!response.ok) throw new Error('Failed to fetch timetable');
-      
-      const text = await response.text();
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('Invalid JSON response:', text);
-        throw new Error('Invalid JSON response from server');
-      }
-    } catch (error) {
-      console.error('API Error - getTimetable:', error);
-      throw error;
-    }
+    const response = await this.fetchWithTimeout(`${API_BASE_URL}/get_timetable.php`);
+    return this.handleResponse(response);
   }
 
   static async submitAttendance(attendanceData: any) {
-    try {
-      const response = await this.fetchWithTimeout(`${API_BASE_URL}/submit_attendance.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(attendanceData),
-      });
-      if (!response.ok) throw new Error('Failed to submit attendance');
-      
-      const text = await response.text();
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('Invalid JSON response:', text);
-        throw new Error('Invalid JSON response from server');
-      }
-    } catch (error) {
-      console.error('API Error - submitAttendance:', error);
-      throw error;
-    }
+    const response = await this.fetchWithTimeout(`${API_BASE_URL}/submit_attendance.php`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(attendanceData),
+    });
+    return this.handleResponse(response);
   }
 
   static async getAbsenteeReport(filters: any) {
-    try {
-      const params = new URLSearchParams(filters);
-      const response = await this.fetchWithTimeout(
-        `${API_BASE_URL}/get_absentee_report.php?${params}`
-      );
-      if (!response.ok) throw new Error('Failed to fetch absentee report');
-      
-      const text = await response.text();
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('Invalid JSON response:', text);
-        throw new Error('Invalid JSON response from server');
-      }
-    } catch (error) {
-      console.error('API Error - getAbsenteeReport:', error);
-      throw error;
-    }
+    const params = new URLSearchParams(filters);
+    const response = await this.fetchWithTimeout(
+      `${API_BASE_URL}/get_absentee_report.php?${params}`
+    );
+    return this.handleResponse(response);
   }
 
   static async getDashboardStats() {
-    try {
-      const response = await this.fetchWithTimeout(`${API_BASE_URL}/get_dashboard_stats.php`);
-      if (!response.ok) throw new Error('Failed to fetch dashboard stats');
-      
-      const text = await response.text();
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('Invalid JSON response:', text);
-        throw new Error('Invalid JSON response from server');
-      }
-    } catch (error) {
-      console.error('API Error - getDashboardStats:', error);
-      throw error;
-    }
+    const response = await this.fetchWithTimeout(`${API_BASE_URL}/get_dashboard_stats.php`);
+    return this.handleResponse(response);
   }
 
   static async getStudents() {
-    try {
-      const response = await this.fetchWithTimeout(`${API_BASE_URL}/get_students.php`);
-      if (!response.ok) throw new Error('Failed to fetch students');
-      
-      const text = await response.text();
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('Invalid JSON response:', text);
-        throw new Error('Invalid JSON response from server');
-      }
-    } catch (error) {
-      console.error('API Error - getStudents:', error);
-      throw error;
-    }
+    const response = await this.fetchWithTimeout(`${API_BASE_URL}/get_students.php`);
+    return this.handleResponse(response);
   }
 
   static async getFields() {
-    try {
-      const response = await this.fetchWithTimeout(`${API_BASE_URL}/get_fields.php`);
-      if (!response.ok) throw new Error('Failed to fetch fields');
-      
-      const text = await response.text();
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('Invalid JSON response:', text);
-        throw new Error('Invalid JSON response from server');
-      }
-    } catch (error) {
-      console.error('API Error - getFields:', error);
-      throw error;
-    }
+    const response = await this.fetchWithTimeout(`${API_BASE_URL}/get_fields.php`);
+    return this.handleResponse(response);
   }
 
   static async addStudent(studentData: any) {
-    try {
-      const response = await this.fetchWithTimeout(`${API_BASE_URL}/add_student.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(studentData),
-      });
-      if (!response.ok) throw new Error('Failed to add student');
-      
-      const text = await response.text();
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('Invalid JSON response:', text);
-        throw new Error('Invalid JSON response from server');
-      }
-    } catch (error) {
-      console.error('API Error - addStudent:', error);
-      throw error;
-    }
+    const response = await this.fetchWithTimeout(`${API_BASE_URL}/add_student.php`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(studentData),
+    });
+    return this.handleResponse(response);
   }
 
   static async updateStudent(studentData: any) {
-    try {
-      const response = await this.fetchWithTimeout(`${API_BASE_URL}/update_student.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(studentData),
-      });
-      if (!response.ok) throw new Error('Failed to update student');
-      
-      const text = await response.text();
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('Invalid JSON response:', text);
-        throw new Error('Invalid JSON response from server');
-      }
-    } catch (error) {
-      console.error('API Error - updateStudent:', error);
-      throw error;
-    }
+    const response = await this.fetchWithTimeout(`${API_BASE_URL}/update_student.php`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(studentData),
+    });
+    return this.handleResponse(response);
+  }
+
+  static async deleteStudent(studentId: string) {
+    const response = await this.fetchWithTimeout(`${API_BASE_URL}/delete_student.php`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id: studentId }),
+    });
+    return this.handleResponse(response);
   }
 
   static async addField(fieldData: any) {
-    try {
-      const response = await this.fetchWithTimeout(`${API_BASE_URL}/add_field.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(fieldData),
-      });
-      if (!response.ok) throw new Error('Failed to add field');
-      
-      const text = await response.text();
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('Invalid JSON response:', text);
-        throw new Error('Invalid JSON response from server');
-      }
-    } catch (error) {
-      console.error('API Error - addField:', error);
-      throw error;
-    }
+    const response = await this.fetchWithTimeout(`${API_BASE_URL}/add_field.php`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(fieldData),
+    });
+    return this.handleResponse(response);
   }
 
   static async updateField(fieldData: any) {
-    try {
-      const response = await this.fetchWithTimeout(`${API_BASE_URL}/update_field.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(fieldData),
-      });
-      if (!response.ok) throw new Error('Failed to update field');
-      
-      const text = await response.text();
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('Invalid JSON response:', text);
-        throw new Error('Invalid JSON response from server');
-      }
-    } catch (error) {
-      console.error('API Error - updateField:', error);
-      throw error;
-    }
+    const response = await this.fetchWithTimeout(`${API_BASE_URL}/update_field.php`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(fieldData),
+    });
+    return this.handleResponse(response);
   }
 
   static async deleteField(fieldId: string) {
-    try {
-      const response = await this.fetchWithTimeout(`${API_BASE_URL}/delete_field.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: fieldId }),
-      });
-      if (!response.ok) throw new Error('Failed to delete field');
-      
-      const text = await response.text();
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('Invalid JSON response:', text);
-        throw new Error('Invalid JSON response from server');
-      }
-    } catch (error) {
-      console.error('API Error - deleteField:', error);
-      throw error;
-    }
+    const response = await this.fetchWithTimeout(`${API_BASE_URL}/delete_field.php`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id: fieldId }),
+    });
+    return this.handleResponse(response);
   }
 
   static async addTimetableEntry(entryData: any) {
-    try {
-      const response = await this.fetchWithTimeout(`${API_BASE_URL}/add_timetable_entry.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(entryData),
-      });
-      if (!response.ok) throw new Error('Failed to add timetable entry');
-      
-      const text = await response.text();
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('Invalid JSON response:', text);
-        throw new Error('Invalid JSON response from server');
-      }
-    } catch (error) {
-      console.error('API Error - addTimetableEntry:', error);
-      throw error;
-    }
+    const response = await this.fetchWithTimeout(`${API_BASE_URL}/add_timetable_entry.php`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(entryData),
+    });
+    return this.handleResponse(response);
   }
 
   static async updateTimetableEntry(entryData: any) {
-    try {
-      const response = await this.fetchWithTimeout(`${API_BASE_URL}/update_timetable_entry.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(entryData),
-      });
-      if (!response.ok) throw new Error('Failed to update timetable entry');
-      
-      const text = await response.text();
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('Invalid JSON response:', text);
-        throw new Error('Invalid JSON response from server');
-      }
-    } catch (error) {
-      console.error('API Error - updateTimetableEntry:', error);
-      throw error;
-    }
+    const response = await this.fetchWithTimeout(`${API_BASE_URL}/update_timetable_entry.php`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(entryData),
+    });
+    return this.handleResponse(response);
   }
 
   static async deleteTimetableEntry(entryId: string) {
-    try {
-      const response = await this.fetchWithTimeout(`${API_BASE_URL}/delete_timetable_entry.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: entryId }),
-      });
-      if (!response.ok) throw new Error('Failed to delete timetable entry');
-      
-      const text = await response.text();
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('Invalid JSON response:', text);
-        throw new Error('Invalid JSON response from server');
-      }
-    } catch (error) {
-      console.error('API Error - deleteTimetableEntry:', error);
-      throw error;
-    }
+    const response = await this.fetchWithTimeout(`${API_BASE_URL}/delete_timetable_entry.php`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id: entryId }),
+    });
+    return this.handleResponse(response);
   }
 }
