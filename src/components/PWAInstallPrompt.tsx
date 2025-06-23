@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, X, Smartphone, Monitor, Chrome, Firefox, Safari } from 'lucide-react';
+import { Download, X, Smartphone, Monitor, Chrome, Siren as Firefox, Variable as Safari } from 'lucide-react';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
